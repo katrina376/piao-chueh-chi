@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('stylesheet'); ?>
+  </head>
+  <body>
+    <header>NTUSC 電子表決器</header>
+    <div id="auth-block">
+      無法辨識您的信箱（<?!= Session.getActiveUser() ?>），可能的原因有：信箱登錄錯誤、無法行使職權。
+    </div>
+  </body>
+</html>

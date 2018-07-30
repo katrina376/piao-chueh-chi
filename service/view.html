@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('stylesheet'); ?>
+  </head>
+  <body>
+    <header>NTUSC 電子表決器</header>
+    <div id="auth-block">
+      <?
+        var email = Session.getActiveUser().getEmail();
+        var data = getInformation(email);
+      ?>
+      <?= data.college ?> <?= data.name ?>
+    </div>
+    <form id="vote">
+      <div id="code-block">
+        <input id="code-input" name="code-input" class="full-width" placeholder="請輸入識別碼"/>
+        <input id="code" name="code" type="hidden"/>
+        <button id="lock" data-state="unlock">檢查</button>
+      </div>
+      <div id="panel-block">
+        <input id="option" name="option" type="hidden"/>
+        <button class="option full-width" id="aye" data-option="贊成">贊成</button>
+        <button class="option full-width" id="naye" data-option="反對">反對</button>
+        <button class="option full-width" id="giveup" data-option="棄權">棄權</button>
+      </div>
+    </form>
+    <div id="message"></div>
+    <script>
+    var $ = function(s) { return document.querySelector(s); }
+    var $$ = function(s) { return document.querySelectorAll(s); }
+
+    var reset = function() {
+      $("#code-input").removeAttribute("disabled");
+      $("#code-input").value = "";
+      $("#code").value = "";
+      $("#option").value = "";
+      $("#lock").setAttribute("data-state", "unlock");
+      $("#lock").innerHTML = "檢查";
+      $$(".option").forEach(function(option) { option.removeAttribute("disabled"); })
+      $("#message").innerHTML = "";
+    }
+
+    $("#lock").addEventListener("click", function(ev) {
+      ev.preventDefault();
+      if ($("#lock").getAttribute("data-state") == "unlock") {
+        if ($("#code-input").value == "") {
+          "";
+        } else {
+          google.script.run
+            .withFailureHandler(function(err) {
+              alert(err);
+            })
+            .withSuccessHandler(function(isValid) {
+              if (isValid) {
+                $("#code-input").setAttribute("disabled", "");
+                $("#lock").setAttribute("data-state", "lock");
+                $("#lock").innerHTML = "重設";
+              } else {
+                alert("識別碼錯誤！");
+                reset();
+              }
+            })
+            .validateStarted($("#code-input").value);
+        }
+      } else {
+        reset();
+      }
+    });
+
+    $("#vote").addEventListener("submit", function(ev) {
+      ev.preventDefault();
+    })
+
+    $$(".option").forEach(function(option) {
+      option.addEventListener("click", function(ev) {
+        $$(".option").forEach(function(option) { option.setAttribute("disabled", ""); });
+
+        $("#code").value = $("#code-input").value;
+        $("#option").value = ev.target.getAttribute("data-option");
+
+        var pending = setInterval(function(){
+          $("#message").innerHTML += "...";
+        }, 1 * 1000);
+
+        google.script.run
+          .withFailureHandler(function(err) {
+            $("#message").innerHTML = "錯誤：" + err;
+            setTimeout(reset, 5 * 1000);
+          })
+          .withSuccessHandler(function(success) {
+            clearInterval(pending);
+            if (success) {
+              $("#message").innerHTML = "投票成功！你剛剛投的選項是：" + $("#option").value;
+            } else {
+              $("#message").innerHTML = "不符合投票資格，可能原因包括：你是主席、太晚投、識別碼錯誤、無法行使職權";
+            }
+            setTimeout(reset, 5 * 1000);
+          })
+          .vote($("#vote"));
+      })
+    });
+    </script>
+  </body>
+</html>

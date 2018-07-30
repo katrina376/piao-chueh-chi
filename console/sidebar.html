@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <style>
+      .logo { vertical-align: middle; }
+      ul { list-style-type: none; padding: 0; }
+      h4 { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="sidebar">
+      <h4>識別碼</h4>
+      <div class="inline form-group">
+        <input type="text" id="code" style="width: 80%;">
+      </div>
+      <h5 class="error" id="code-error"></h5>
+      <h5 id="code-valid"></h5>
+      <div class="block">
+        <button class="create" id="confirm" disabled>產生表決</button>
+      </div>
+      <h5 id="result"></h5>
+    </div>
+    <script>
+    var $ = function(s) { return document.querySelector(s); }
+
+    $("#code").addEventListener("input", function(ev) {
+      google.script.run
+        .withFailureHandler(function(err) {})
+        .withSuccessHandler(function(is_valid) {
+          if (is_valid) {
+            $("#code-error").innerHTML = "";
+            $("#code-pass").innerHTML = "這個識別碼，我覺得可以。";
+            $("#confirm").setAttribute("disabled", "");
+            $("#result").innerHTML = "";
+          } else {
+            $("#code-error").innerHTML = "這個識別碼，我覺得不行！";
+            $("#code-pass").innerHTML = "";
+            $("#confirm").removeAttribute("disabled");
+            $("#result").innerHTML = "";
+          }
+        })
+        .validateCode($("#code").value);
+    });
+
+    $("#confirm").addEventListener("click", function(ev) {
+      ev.preventDefault();
+      google.script.run
+        .withFailureHandler(function(err) {
+          $("#result").innerHTML = "錯誤：" + err;
+        })
+        .withSuccessHandler(function() {
+          $("#result").innerHTML = "任務完成"
+        })
+        .confirm($("#code").value);
+    })
+    </script>
+  </body>
+</html>
